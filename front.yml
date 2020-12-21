@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front
+  labels:
+    app: front
+    tier: front
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      tier: front
+  template:
+    metadata:
+      labels:
+        tier: front
+    spec:
+      containers:
+      - name: front
+        image: mrpipikado/gt_front_prod:latest
+        ports:
+        - containerPort: 80
+          name: "http-server"
+      initContainers:
+      - name: init-back
+        image: busybox
+        command: ['sh', '-c', 'until nslookup back; do echo waiting for back; sleep 2; done;']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: front-lb
+spec:
+  selector:
+    tier: front
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+

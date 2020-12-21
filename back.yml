@@ -1,0 +1,54 @@
+---
+apiVersion: v1
+data:
+  application-prod.properties: c2VydmVyLnBvcnQ9ODA4MQpzcHJpbmcuZGF0YXNvdXJjZS51cmw9amRiYzpteXNxbDovL2d0LWRiLmNyb3Bidzg5Ymhwdy51cy1lYXN0LTEucmRzLmFtYXpvbmF3cy5jb206MzMwNi9nb2FsdHJhY2tlcmRiP3NlcnZlclRpbWV6b25lPVVUQwpzcHJpbmcuZGF0YXNvdXJjZS51c2VybmFtZT1tZmgKc3ByaW5nLmRhdGFzb3VyY2UucGFzc3dvcmQ9MTExMTExMTEKc3ByaW5nLmRhdGFzb3VyY2UuaW5pdGlhbGl6YXRpb24tbW9kZT1hbHdheXMKc3ByaW5nLmpwYS5zaG93LXNxbD10cnVlCnNwcmluZy5qcGEuaGliZXJuYXRlLmRkbC1hdXRvPXVwZGF0ZQpqd3QudG9rZW4uc2VjcmV0PWdvYWx0cmFja2VyCmp3dC50b2tlbi5leHBpcmVkPTUwMDAwMDAK
+kind: Secret
+metadata:
+  name: app-profile
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: back
+  labels:
+    app: back
+    tier: back
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      tier: back
+  template:
+    metadata:
+      labels:
+        tier: back
+    spec:
+      containers:
+      - name: back
+        image: mrpipikado/gt_back:latest
+        ports:
+        - containerPort: 8081
+          name: "api-server"
+          #command: ["java"]
+        args: ["/app.jar", "--spring.config.location=file:///tmp/config/application-prod.properties", "--spring.profiles.active=prod"]
+        volumeMounts:
+        - name: back-conf
+          mountPath: /tmp/config
+      volumes:
+      - name: back-conf
+        secret:
+          secretName: app-profile
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: back
+spec:
+  selector:
+    tier: back
+  ports:
+    - port: 8081
+      targetPort: 8081
+  type: LoadBalancer
+
